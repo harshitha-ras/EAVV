@@ -1,5 +1,6 @@
 # EAVV
 
+Download the EAV folder and unzip this. Then run the scripts.
 format.py - standarises the xml format of DAWN and WEDGE dataset.
 
 

@@ -3,7 +3,7 @@
 ## Executive Summary
 
 
-DAWN-WEDGE DRIVE combines real-world and synthetic data for autonomous vehicle perception in adverse weather conditions. By merging DAWN's real-world imagery with WEDGE's synthetic data, we address the critical challenge of reliable object detection across diverse weather scenarios. This dataset enables robust model training while reducing the risks and costs associated with collecting real-world data in dangerous weather conditions.
+EAVV combines real-world and synthetic data for autonomous vehicle perception in adverse weather conditions. By merging DAWN's real-world imagery with WEDGE's synthetic data, we address the critical challenge of reliable object detection across diverse weather scenarios. This dataset enables robust model training while reducing the risks and costs associated with collecting real-world data in dangerous weather conditions.
 
 
 ## Potential Applications

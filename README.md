@@ -19,10 +19,15 @@ EAVV combines real-world and synthetic data for autonomous vehicle perception in
 
 EAVV/
 ├── EAVV.zip               # Contains all XML annotations and PNG images
+
 ├── format.py              # Script for standardizing XML annotations
+
 ├── EDA.py                # Script for generating visualizations and analysis
+
 ├── setup.py              # Package configuration and dependencies
+
 ├── requirements.txt      # Python package dependencies
+
 └── README.md             # Project documentation
 
 ## Instructions

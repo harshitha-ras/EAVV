@@ -32,6 +32,7 @@ def train_yolov8(model_size='n', epochs=50, batch_size=8, img_size=320,
         batch=batch_size,
         imgsz=img_size,
         device=device,
+        workers=0,
         project='yolo_output',
         name=f'yolov8{model_size}_weather',
         patience=10,                # Early stopping patience

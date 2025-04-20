@@ -94,48 +94,63 @@ def analyze_distribution(metadata_df):
     return rare_classes, weather_counts
 
 def create_stratified_splits(metadata_df, rare_classes, test_size=0.15, val_size=0.15):
-    # Create binary indicators for each rare class
+    """
+    Creates train/validation/test splits while handling rare class combinations.
+    """
+    print("Creating stratification features...")
+    
+    # Create binary indicators for rare classes
     for rare_class in rare_classes:
         metadata_df[f'has_{rare_class}'] = metadata_df['classes'].apply(
             lambda classes: 1 if rare_class in classes else 0
         )
     
-    # Create a weather category column
-    metadata_df['weather_cat'] = metadata_df['weather'].astype('category').cat.codes
-    
-    # Create a combined stratification column that considers both weather and rare classes
-    # This helps ensure rare classes are distributed across splits
-    stratify_cols = ['weather_cat'] + [f'has_{c}' for c in rare_classes]
-    
-    # Create a combined stratification feature
-    metadata_df['strat_combined'] = metadata_df[stratify_cols].apply(
-        lambda x: '_'.join(x.astype(str)), axis=1
-    )
+    # Use only weather for stratification (more reliable)
+    print("Splitting data with weather stratification...")
     
     # First split: training vs. (validation + test)
     train_df, temp_df = train_test_split(
         metadata_df,
         test_size=test_size + val_size,
         random_state=42,
-        stratify=metadata_df['strat_combined']
+        stratify=metadata_df['weather']
     )
     
     # Second split: validation vs. test
-    # Recalculate the stratification feature for the temporary dataframe
-    temp_df['strat_combined'] = temp_df[stratify_cols].apply(
-        lambda x: '_'.join(x.astype(str)), axis=1
-    )
-    
-    # Split temp_df into validation and test sets
     relative_val_size = val_size / (test_size + val_size)
     val_df, test_df = train_test_split(
         temp_df,
         test_size=1 - relative_val_size,
         random_state=42,
-        stratify=temp_df['strat_combined']
+        stratify=temp_df['weather']
     )
     
+    # Check if rare classes are represented in all splits
+    for rare_class in rare_classes:
+        train_has = train_df['classes'].apply(lambda x: rare_class in x).sum()
+        val_has = val_df['classes'].apply(lambda x: rare_class in x).sum()
+        test_has = test_df['classes'].apply(lambda x: rare_class in x).sum()
+        
+        print(f"Class '{rare_class}' distribution: Train={train_has}, Val={val_has}, Test={test_has}")
+        
+        # If any split is missing the rare class, manually move some examples
+        if val_has == 0 and train_has > 0:
+            # Move one example from train to val
+            idx_to_move = train_df[train_df['classes'].apply(lambda x: rare_class in x)].index[0]
+            val_df = pd.concat([val_df, train_df.loc[[idx_to_move]]])
+            train_df = train_df.drop(idx_to_move)
+            print(f"  Moved one '{rare_class}' example from train to validation")
+            
+        if test_has == 0 and train_has > 0:
+            # Move one example from train to test
+            idx_to_move = train_df[train_df['classes'].apply(lambda x: rare_class in x)].index[0]
+            test_df = pd.concat([test_df, train_df.loc[[idx_to_move]]])
+            train_df = train_df.drop(idx_to_move)
+            print(f"  Moved one '{rare_class}' example from train to test")
+    
     return train_df, val_df, test_df
+
+
 
 def verify_splits(train_df, val_df, test_df, rare_classes):
     splits = {

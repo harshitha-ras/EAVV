@@ -1,4 +1,5 @@
 import os
+import shutil
 import xml.etree.ElementTree as ET
 import pandas as pd
 import numpy as np
@@ -186,29 +187,62 @@ def create_split_directories(train_df, val_df, test_df):
         os.makedirs(os.path.join(directory, 'images'), exist_ok=True)
         os.makedirs(os.path.join(directory, 'annotations'), exist_ok=True)
     
-    # Copy files to appropriate directories
-    import shutil
-    
     def copy_files(df, split_name):
+        missing_files = []
+        processed_files = 0
+        
         for _, row in df.iterrows():
-            # Copy image
+            # Check if image exists
+            img_src = row['image_path']
             img_dest = os.path.join(split_dirs[split_name], 'images', 
-                                   f"{row['dataset']}_{row['weather']}_{row['filename']}")
-            shutil.copy2(row['image_path'], img_dest)
+                                f"{row['dataset']}_{row['weather']}_{row['filename']}")
             
-            # Copy annotation
-            xml_dest = os.path.join(split_dirs[split_name], 'annotations', 
-                                   f"{row['dataset']}_{row['weather']}_{row['filename'].replace('.jpg', '.xml')}")
-            shutil.copy2(row['xml_path'], xml_dest)
+            # Skip if image doesn't exist
+            if not os.path.exists(img_src):
+                missing_files.append(img_src)
+                continue
+                
+            try:
+                # Copy image
+                shutil.copy2(img_src, img_dest)
+                
+                # Copy annotation
+                xml_src = row['xml_path']
+                xml_dest = os.path.join(split_dirs[split_name], 'annotations', 
+                                    f"{row['dataset']}_{row['weather']}_{row['filename'].replace('.jpg', '.xml')}")
+                
+                if os.path.exists(xml_src):
+                    shutil.copy2(xml_src, xml_dest)
+                    processed_files += 1
+                else:
+                    missing_files.append(xml_src)
+                    
+            except Exception as e:
+                print(f"Error copying {img_src}: {e}")
+                missing_files.append(img_src)
+        
+        # Report missing files
+        if missing_files:
+            print(f"\nWarning: {len(missing_files)} files were missing in the {split_name} split:")
+            for file in missing_files[:10]:  # Show first 10 missing files
+                print(f"  - {file}")
+            if len(missing_files) > 10:
+                print(f"  ... and {len(missing_files) - 10} more")
+        
+        return processed_files
+
     
-    copy_files(train_df, 'train')
-    copy_files(val_df, 'val')
-    copy_files(test_df, 'test')
+    # Copy files to appropriate directories with error handling
+    train_processed = copy_files(train_df, 'train')
+    val_processed = copy_files(val_df, 'val')
+    test_processed = copy_files(test_df, 'test')
     
     # Print summary
-    print(f"Training set: {len(train_df)} images")
-    print(f"Validation set: {len(val_df)} images")
-    print(f"Test set: {len(test_df)} images")
+    print(f"Training set: {train_processed} images processed (out of {len(train_df)} metadata entries)")
+    print(f"Validation set: {val_processed} images processed (out of {len(val_df)} metadata entries)")
+    print(f"Test set: {test_processed} images processed (out of {len(test_df)} metadata entries)")
+    print(f"Total: {train_processed + val_processed + test_processed} images processed")
+
 
 def main():
     # Extract metadata from both datasets

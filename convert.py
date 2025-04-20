@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 # Define your classes based on your dataset
 # Update this list with all classes in your dataset
-CLASSES = ['person', 'bicycle', 'car', 'motorcycle', 'bus', 'train', 'truck']
+CLASSES = ['person', 'bicycle', 'car', 'motorcycle', 'bus', 'train', 'truck', 'van']
 
 def convert_bbox_to_yolo(size, box):
     """

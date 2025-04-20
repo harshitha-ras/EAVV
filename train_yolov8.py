@@ -2,8 +2,8 @@ from ultralytics import YOLO
 import os
 import argparse
 
-def train_yolov8(model_size='n', epochs=5, batch_size=4, img_size=320, 
-                 data_yaml='weather_data.yaml', device='cpu', oversample=True):
+def train_yolov8(model_size='n', epochs=50, batch_size=8, img_size=320, 
+                 data_yaml='weather_data.yaml', device='0', oversample=True):
     """
     Train YOLOv8 on the DAWN-WEDGE merged dataset
     

@@ -3,7 +3,7 @@ import os
 import argparse
 
 def train_yolov8(model_size='n', epochs=5, batch_size=4, img_size=320, 
-                 data_yaml='weather_data.yaml', device='cpu'):
+                 data_yaml='weather_data.yaml', device='cpu', oversample=True):
     """
     Train YOLOv8 on the DAWN-WEDGE merged dataset
     
@@ -17,6 +17,10 @@ def train_yolov8(model_size='n', epochs=5, batch_size=4, img_size=320,
     """
     # Create output directory
     os.makedirs('yolo_output', exist_ok=True)
+
+    # Apply oversampling if requested
+    if oversample:
+        data_yaml = create_oversampling_dataset(data_yaml)
     
     # Load a pretrained YOLOv8 model
     model = YOLO(f'yolov8{model_size}.pt')
@@ -127,6 +131,86 @@ def predict_with_model(model_path, source_path, conf_threshold=0.25, img_size=12
     
     return results
 
+def create_oversampling_dataset(data_yaml, rare_classes=['bicycle', 'train', 'motorcycle']):
+    """
+    Create a dataset with oversampling for rare classes
+    
+    Args:
+        data_yaml: Path to the YAML file
+        rare_classes: List of rare class names to oversample
+    """
+    import yaml
+    from pathlib import Path
+    import random
+    import shutil
+    
+    # Load class names from YAML
+    with open(data_yaml, 'r') as f:
+        data = yaml.safe_load(f)
+    
+    class_names = data['names']
+    class_ids = {v: k for k, v in class_names.items()}
+    
+    # Create oversampling directory
+    base_dir = Path(data['path'])
+    oversample_dir = base_dir / "train_oversample"
+    oversample_img_dir = oversample_dir / "images"
+    oversample_lbl_dir = oversample_dir / "labels"
+    
+    os.makedirs(oversample_img_dir, exist_ok=True)
+    os.makedirs(oversample_lbl_dir, exist_ok=True)
+    
+    # Copy all original training data
+    train_img_dir = base_dir / "train" / "images"
+    train_lbl_dir = base_dir / "train" / "labels"
+    
+    for img_file in os.listdir(train_img_dir):
+        shutil.copy2(train_img_dir / img_file, oversample_img_dir / img_file)
+        
+        # Copy corresponding label file
+        lbl_file = img_file.replace('.jpg', '.txt').replace('.png', '.txt')
+        if os.path.exists(train_lbl_dir / lbl_file):
+            shutil.copy2(train_lbl_dir / lbl_file, oversample_lbl_dir / lbl_file)
+    
+    # Find images with rare classes
+    rare_class_images = []
+    for lbl_file in os.listdir(train_lbl_dir):
+        with open(train_lbl_dir / lbl_file, 'r') as f:
+            lines = f.readlines()
+            
+        for line in lines:
+            class_id = int(line.split()[0])
+            class_name = class_names[class_id]
+            
+            if class_name in rare_classes:
+                img_file = lbl_file.replace('.txt', '.jpg')
+                if os.path.exists(train_img_dir / img_file):
+                    rare_class_images.append((img_file, lbl_file))
+                break
+    
+    # Oversample rare classes (duplicate 5x)
+    for i in range(5):  # Duplicate 5 times
+        for img_file, lbl_file in rare_class_images:
+            new_img_file = f"oversample_{i}_{img_file}"
+            new_lbl_file = f"oversample_{i}_{lbl_file}"
+            
+            shutil.copy2(train_img_dir / img_file, oversample_img_dir / new_img_file)
+            shutil.copy2(train_lbl_dir / lbl_file, oversample_lbl_dir / new_lbl_file)
+    
+    # Update YAML file
+    oversample_yaml = data_yaml.replace('.yaml', '_oversample.yaml')
+    data['train'] = "train_oversample/images"
+    
+    with open(oversample_yaml, 'w') as f:
+        yaml.dump(data, f)
+    
+    print(f"Created oversampled dataset with {len(os.listdir(oversample_img_dir))} images")
+    print(f"Original dataset had {len(os.listdir(train_img_dir))} images")
+    print(f"Added {len(rare_class_images) * 5} oversampled rare class images")
+    
+    return oversample_yaml
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train YOLOv8 on DAWN-WEDGE dataset')
     parser.add_argument('--mode', type=str, default='train', choices=['train', 'validate', 'predict'],
@@ -155,7 +239,8 @@ if __name__ == "__main__":
             data_yaml=args.data,
             device=args.device
         )
-        print(f"Training completed. Best model saved at: {model.best}")
+        print(f"Training completed. Best model saved at: {results.best}")
+
         
     elif args.mode == 'validate':
         if args.weights is None:

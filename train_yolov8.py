@@ -239,7 +239,9 @@ if __name__ == "__main__":
             data_yaml=args.data,
             device=args.device
         )
-        print(f"Training completed. Best model saved at: {results.best}")
+        print(f"Training completed with mAP50: {results.box.map50:.3f}")
+        print(f"Best model saved at: yolo_output/yolov8n_weather5/weights/best.pt")
+
 
         
     elif args.mode == 'validate':

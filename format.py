@@ -36,19 +36,29 @@ def process_dataset(dataset_path, output_path, dataset_name):
         
         for weather in weather_conditions:
             weather_dir = os.path.join(dataset_path, weather)
+            # Look for the PASCAL_VOC subfolder
+            pascal_voc_dir = os.path.join(weather_dir, f"{weather}_PASCAL_VOC")
             
-            # Process XML files in this weather condition
-            xml_files = [f for f in os.listdir(weather_dir) if f.endswith('.xml')]
+            if not os.path.exists(pascal_voc_dir):
+                print(f"Warning: {pascal_voc_dir} not found")
+                continue
+                
+            # Process XML files in the PASCAL_VOC subfolder
+            xml_files = [f for f in os.listdir(pascal_voc_dir) if f.endswith('.xml')]
+            
             for xml_file in tqdm(xml_files, desc=f"Processing {weather} XMLs"):
                 try:
                     # Get corresponding image file
                     img_file = xml_file.replace('.xml', '.jpg')
-                    xml_path = os.path.join(weather_dir, xml_file)
-                    img_path = os.path.join(weather_dir, img_file)
+                    xml_path = os.path.join(pascal_voc_dir, xml_file)
+                    img_path = os.path.join(pascal_voc_dir, img_file)
                     
                     if not os.path.exists(img_path):
-                        log_error(xml_file, f"Corresponding image file not found: {img_file}")
-                        continue
+                        # Try looking in the parent weather folder
+                        img_path = os.path.join(weather_dir, img_file)
+                        if not os.path.exists(img_path):
+                            log_error(xml_file, f"Corresponding image file not found: {img_file}")
+                            continue
                     
                     # Create standardized XML with weather condition
                     standardize_xml(xml_path, os.path.join(xml_output_path, xml_file), 

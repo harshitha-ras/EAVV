@@ -9,5 +9,5 @@ names:
   7: van
 path: /home/harsh/EAVV/merged_dataset
 test: test/images
-train: train_oversample/images
+train: train_weather_balanced/images
 val: val/images

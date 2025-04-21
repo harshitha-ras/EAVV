@@ -1,0 +1,24 @@
+# BODEM Analysis Report
+
+## Dataset Comparison
+
+combined: Mean Saliency = 0.3476 ± 0.0150
+
+## Weather Condition Comparison
+
+
+### Dust
+
+combined: Mean Saliency = 0.3315 ± 0.0000
+
+### Fog
+
+combined: Mean Saliency = 0.3711 ± 0.0000
+
+### Rain
+
+combined: Mean Saliency = 0.3494 ± 0.0000
+
+### Snow
+
+combined: Mean Saliency = 0.3386 ± 0.0000

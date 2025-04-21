@@ -10,7 +10,7 @@ def load_class_names(yaml_path):
         data = yaml.safe_load(f)
     return data.get('names', {})
 
-def analyze_dataset(model_path, dataset_path, output_dir, class_names, dataset_name, weather_conditions=None, num_samples=5):
+def analyze_dataset(model_path, dataset_path, output_dir, class_names, dataset_name, weather_conditions=None, num_samples=5, device='cpu'):
     """
     Apply BODEM to analyze a dataset.
     
@@ -24,7 +24,7 @@ def analyze_dataset(model_path, dataset_path, output_dir, class_names, dataset_n
         num_samples: Number of samples per weather condition
     """
     # Create BODEM explainer
-    explainer = BODEMExplainer(model_path, image_size=640, device='cpu')
+    explainer = BODEMExplainer(model_path, image_size=640, device=device)
     
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)
@@ -98,6 +98,8 @@ def main():
     parser.add_argument("--data", type=str, required=True, help="Path to data YAML file")
     parser.add_argument("--output", type=str, default="bodem_explanations", help="Output directory for explanations")
     parser.add_argument("--samples", type=int, default=5, help="Number of samples per weather condition")
+    parser.add_argument("--device", type=str, default="cpu", help="Device to run inference on ('cpu' or 'cuda')")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
     
     # Load class names from YAML

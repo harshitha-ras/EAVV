@@ -5,7 +5,5 @@ __pycache__/
 *.pt
 EAVV/
 DAWN/
-dawn.zip
 images/
-wedge.zip
 merged_dataset

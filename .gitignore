@@ -1,6 +1,11 @@
+oenv/
+__pycache__/
+*.pyc
+*.pyo
+*.pt
 EAVV/
 DAWN/
-dawn.zip
+dawn/
 images/
-wedge.zip
+wedge/
 merged_dataset

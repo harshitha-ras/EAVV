@@ -1,298 +1,256 @@
 import os
 import numpy as np
 import cv2
-import torch
-from ultralytics import YOLO
-from tqdm import tqdm
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
+from ultralytics import YOLO
+import torch
+import io
+import sys
+import contextlib
+from tqdm.contrib import DummyTqdmFile
+
+# Create a context manager to redirect stdout/stderr to tqdm.write
+@contextlib.contextmanager
+def std_out_err_redirect_tqdm():
+    orig_out_err = sys.stdout, sys.stderr
+    try:
+        sys.stdout, sys.stderr = map(DummyTqdmFile, orig_out_err)
+        yield orig_out_err
+    except Exception as exc:
+        raise exc
+    finally:
+        sys.stdout, sys.stderr = orig_out_err
 
 class BODEMExplainer:
+    """
+    BODEM (Boundary-based Object Detection Explanation Method) explainer for YOLOv8.
+    """
     def __init__(self, model_path, image_size=640, device='cpu'):
         """
-        Initialize the BODEM explainer for object detection models.
+        Initialize the BODEM explainer.
         
         Args:
-            model_path: Path to the trained YOLOv8 model
+            model_path: Path to YOLOv8 model
             image_size: Input image size for the model
             device: Device to run inference on ('cpu' or 'cuda')
         """
+        print(f"Initializing BODEM Explainer with model: {model_path}, device: {device}", flush=True)
         self.model = YOLO(model_path)
         self.image_size = image_size
         self.device = device
-        
-    def generate_hierarchical_masks(self, image, detected_object, level=1, max_level=6):
+        self.model.to(device)
+        print(f"Model loaded successfully on {device}", flush=True)
+    
+    def explain(self, image_path):
         """
-        Generate hierarchical masks for the input image.
+        Generate BODEM explanation for an image.
         
         Args:
-            image: Input image (numpy array)
-            detected_object: Bounding box coordinates [x1, y1, x2, y2]
-            level: Current hierarchy level
-            max_level: Maximum hierarchy level
+            image_path: Path to image
             
         Returns:
-            List of masked images and corresponding masks
+            image: Original image
+            detections: List of detection objects
+            saliency_maps: Dictionary mapping detection indices to saliency maps
         """
-        h, w = image.shape[:2]
-        
-        # Define block size based on level
-        if level == 1:
-            block_size = (128, 128)
-        else:
-            # Each level divides the previous level's block size by 2
-            prev_block_size = (128 // (2 ** (level - 2)), 128 // (2 ** (level - 2)))
-            block_size = (prev_block_size[0] // 2, prev_block_size[1] // 2)
-        
-        # Resize image to match model input size while maintaining aspect ratio
-        scale_factor = min(self.image_size / w, self.image_size / h)
-        new_w, new_h = int(w * scale_factor), int(h * scale_factor)
-        resized_image = cv2.resize(image, (new_w, new_h))
-        
-        # Create a canvas with model input size
-        canvas = np.zeros((self.image_size, self.image_size, 3), dtype=np.uint8)
-        canvas[:new_h, :new_w] = resized_image
-        
-        # Adjust bounding box to the resized image
-        x1, y1, x2, y2 = detected_object
-        x1, y1, x2, y2 = int(x1 * scale_factor), int(y1 * scale_factor), int(x2 * scale_factor), int(y2 * scale_factor)
-        
-        # Create grid of blocks
-        blocks = []
-        for y in range(0, self.image_size, block_size[1]):
-            for x in range(0, self.image_size, block_size[0]):
-                # Check if block overlaps with the object
-                if level == 1 or self.block_overlaps_object(x, y, block_size, (x1, y1, x2, y2)):
-                    blocks.append((x, y, min(x + block_size[0], self.image_size), min(y + block_size[1], self.image_size)))
-        
-        # Generate masks and masked images
-        masked_images = []
-        masks = []
-        
-        # Number of masks to generate (as per BODEM paper)
-        n_masks = 100
-        
-        for _ in range(n_masks):
-            # Create a random binary mask
-            mask = np.ones((self.image_size, self.image_size), dtype=np.float32)
+        try:
+            print(f"Explaining image: {image_path}", flush=True)
             
-            # Randomly select blocks to mask
-            selected_blocks = np.random.choice(len(blocks), size=np.random.randint(1, len(blocks) + 1), replace=False)
+            # Load image
+            image = cv2.imread(image_path)
+            if image is None:
+                raise ValueError(f"Could not load image: {image_path}")
             
-            for idx in selected_blocks:
-                x1_b, y1_b, x2_b, y2_b = blocks[idx]
-                mask[y1_b:y2_b, x1_b:x2_b] = 0
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             
-            # Apply mask to image
-            masked_image = canvas.copy()
-            for c in range(3):
-                masked_image[:, :, c] = masked_image[:, :, c] * mask
+            # Run inference
+            print(f"Running inference on image", flush=True)
+            results = self.model(image, verbose=False)
             
-            masked_images.append(masked_image)
-            masks.append(mask)
-        
-        return masked_images, masks
+            # Get detections
+            detections = results[0].boxes
+            print(f"Found {len(detections)} detections", flush=True)
+            
+            if len(detections) == 0:
+                return image, [], {}
+            
+            # Generate saliency maps for each detection
+            saliency_maps = {}
+            for i, detection in enumerate(detections):
+                print(f"Generating saliency map for detection {i+1}/{len(detections)}", flush=True)
+                saliency_map = self._generate_saliency_map(image, detection)
+                saliency_maps[i] = saliency_map
+            
+            return image, detections, saliency_maps
+        except Exception as e:
+            print(f"Error in explain method: {str(e)}", flush=True)
+            import traceback
+            traceback.print_exc()
+            return None, [], {}
     
-    def block_overlaps_object(self, x, y, block_size, obj_bbox):
-        """Check if a block overlaps with the object bounding box."""
-        x1_b, y1_b = x, y
-        x2_b, y2_b = x + block_size[0], y + block_size[1]
-        x1_o, y1_o, x2_o, y2_o = obj_bbox
-        
-        # Check for overlap
-        return not (x2_b <= x1_o or x1_b >= x2_o or y2_b <= y1_o or y1_b >= y2_o)
-    
-    def compute_similarity(self, original_obj, masked_obj):
-        """Compute IoU similarity between original and masked detections."""
-        if masked_obj is None:
-            return 0.0
-        
-        # Extract coordinates
-        x1_o, y1_o, x2_o, y2_o = original_obj
-        x1_m, y1_m, x2_m, y2_m = masked_obj
-        
-        # Calculate intersection area
-        x1_i = max(x1_o, x1_m)
-        y1_i = max(y1_o, y1_m)
-        x2_i = min(x2_o, x2_m)
-        y2_i = min(y2_o, y2_m)
-        
-        if x2_i <= x1_i or y2_i <= y1_i:
-            return 0.0  # No intersection
-        
-        intersection = (x2_i - x1_i) * (y2_i - y1_i)
-        
-        # Calculate union area
-        area_o = (x2_o - x1_o) * (y2_o - y1_o)
-        area_m = (x2_m - x1_m) * (y2_m - y1_m)
-        union = area_o + area_m - intersection
-        
-        return intersection / union
-    
-    def estimate_saliency(self, image, detected_objects, level=1, max_level=6, prev_saliency_map=None):
+    def _generate_saliency_map(self, image, detection):
         """
-        Estimate saliency maps for detected objects using hierarchical masking.
+        Generate saliency map for a detection using BODEM.
         
         Args:
             image: Input image
-            detected_objects: List of detected objects (bounding boxes and classes)
-            level: Current hierarchy level
-            max_level: Maximum hierarchy level
-            prev_saliency_map: Saliency map from previous level
+            detection: Detection object
             
         Returns:
-            Dictionary of saliency maps for each detected object
+            saliency_map: Saliency map highlighting important regions
         """
-        saliency_maps = {}
-        
-        for obj_idx, obj in enumerate(detected_objects):
-            bbox, class_id, conf = obj
+        try:
+            # Get bounding box coordinates
+            x1, y1, x2, y2 = detection.xyxy[0].cpu().numpy().astype(int)
             
-            # Generate masked images
-            masked_images, masks = self.generate_hierarchical_masks(image, bbox, level, max_level)
+            # Create a mask for the detection
+            mask = np.zeros_like(image[:, :, 0], dtype=np.float32)
+            mask[y1:y2, x1:x2] = 1.0
             
-            # Initialize saliency map
-            if prev_saliency_map is None or obj_idx not in prev_saliency_map:
-                saliency_map = np.zeros((self.image_size, self.image_size), dtype=np.float32)
-            else:
-                saliency_map = prev_saliency_map[obj_idx].copy()
+            # Create a saliency map by applying hierarchical masking
+            saliency_map = np.zeros_like(image[:, :, 0], dtype=np.float32)
             
-            # Run inference on masked images
-            for i, masked_image in enumerate(masked_images):
-                # Get predictions for masked image
-                results = self.model(masked_image, verbose=False)
-                
-                # Find the corresponding detection (if any)
-                max_iou = 0
-                matched_obj = None
-                
-                for det in results[0].boxes.data:
-                    det_bbox = det[:4].cpu().numpy()
-                    iou = self.compute_similarity(bbox, det_bbox)
-                    if iou > max_iou:
-                        max_iou = iou
-                        matched_obj = det
-                
-                # Update saliency map based on detection similarity
-                importance = 1.0 - max_iou  # Higher importance for regions that affect detection
-                
-                # Apply importance to mask
-                saliency_update = masks[i] * importance
-                
-                # Update saliency map
-                saliency_map += saliency_update
+            # Divide the bounding box into a grid
+            grid_size = 8
+            cell_height = (y2 - y1) // grid_size
+            cell_width = (x2 - x1) // grid_size
+            
+            if cell_height <= 0 or cell_width <= 0:
+                # If the box is too small, use the entire box
+                saliency_map[y1:y2, x1:x2] = 1.0
+                return saliency_map
+            
+            # Apply hierarchical masking
+            for i in range(grid_size):
+                for j in range(grid_size):
+                    # Calculate cell coordinates
+                    cell_x1 = x1 + j * cell_width
+                    cell_y1 = y1 + i * cell_height
+                    cell_x2 = min(cell_x1 + cell_width, x2)
+                    cell_y2 = min(cell_y1 + cell_height, y2)
+                    
+                    # Create a masked image
+                    masked_image = image.copy()
+                    masked_image[cell_y1:cell_y2, cell_x1:cell_x2] = 0
+                    
+                    # Run inference on masked image
+                    results = self.model(masked_image, verbose=False)
+                    
+                    # Check if the detection is still present
+                    found = False
+                    confidence_diff = 0
+                    
+                    for new_detection in results[0].boxes:
+                        new_x1, new_y1, new_x2, new_y2 = new_detection.xyxy[0].cpu().numpy().astype(int)
+                        
+                        # Calculate IoU with original detection
+                        intersection_x1 = max(x1, new_x1)
+                        intersection_y1 = max(y1, new_y1)
+                        intersection_x2 = min(x2, new_x2)
+                        intersection_y2 = min(y2, new_y2)
+                        
+                        if intersection_x2 > intersection_x1 and intersection_y2 > intersection_y1:
+                            intersection_area = (intersection_x2 - intersection_x1) * (intersection_y2 - intersection_y1)
+                            original_area = (x2 - x1) * (y2 - y1)
+                            new_area = (new_x2 - new_x1) * (new_y2 - new_y1)
+                            union_area = original_area + new_area - intersection_area
+                            iou = intersection_area / union_area
+                            
+                            if iou > 0.5:
+                                found = True
+                                # Calculate confidence difference
+                                original_conf = detection.conf[0].item()
+                                new_conf = new_detection.conf[0].item()
+                                confidence_diff = original_conf - new_conf
+                                break
+                    
+                    # Update saliency map based on detection presence
+                    if not found:
+                        # If detection disappeared, this region is important
+                        saliency_map[cell_y1:cell_y2, cell_x1:cell_x2] = 1.0
+                    else:
+                        # If detection remained but confidence decreased, assign proportional importance
+                        saliency_map[cell_y1:cell_y2, cell_x1:cell_x2] = min(1.0, max(0.0, confidence_diff))
             
             # Normalize saliency map
             if np.max(saliency_map) > 0:
                 saliency_map = saliency_map / np.max(saliency_map)
             
-            saliency_maps[obj_idx] = saliency_map
-        
-        return saliency_maps
+            return saliency_map
+        except Exception as e:
+            print(f"Error in _generate_saliency_map: {str(e)}", flush=True)
+            import traceback
+            traceback.print_exc()
+            return np.zeros_like(image[:, :, 0], dtype=np.float32)
     
-    def explain(self, image_path, max_level=6):
+    def visualize_explanation(self, image, detections, saliency_maps, class_names, output_path):
         """
-        Generate BODEM explanations for detections in an image.
-        
-        Args:
-            image_path: Path to the input image
-            max_level: Maximum hierarchy level for masking
-            
-        Returns:
-            Original image, detections, and saliency maps
-        """
-        # Load image
-        image = cv2.imread(image_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        
-        # Run detection
-        results = self.model(image, verbose=False)
-        
-        # Extract detections
-        detections = []
-        for det in results[0].boxes.data:
-            bbox = det[:4].cpu().numpy().astype(int)
-            class_id = int(det[5].item())
-            conf = det[4].item()
-            detections.append((bbox, class_id, conf))
-        
-        # Initialize saliency maps
-        saliency_maps = None
-        
-        # Hierarchical saliency estimation
-        for level in range(1, max_level + 1):
-            saliency_maps = self.estimate_saliency(image, detections, level, max_level, saliency_maps)
-        
-        return image, detections, saliency_maps
-    
-    def visualize_explanation(self, image, detections, saliency_maps, class_names, output_path=None):
-        """
-        Visualize BODEM explanations.
+        Visualize BODEM explanation and save to file.
         
         Args:
             image: Original image
-            detections: List of detected objects
-            saliency_maps: Dictionary of saliency maps
-            class_names: Dictionary mapping class IDs to names
-            output_path: Path to save the visualization
+            detections: List of detection objects
+            saliency_maps: Dictionary mapping detection indices to saliency maps
+            class_names: Dictionary of class names
+            output_path: Path to save visualization
         """
-        h, w = image.shape[:2]
-        
-        # Resize image to match model input size while maintaining aspect ratio
-        scale_factor = min(self.image_size / w, self.image_size / h)
-        new_w, new_h = int(w * scale_factor), int(h * scale_factor)
-        resized_image = cv2.resize(image, (new_w, new_h))
-        
-        # Create a canvas with model input size
-        canvas = np.zeros((self.image_size, self.image_size, 3), dtype=np.uint8)
-        canvas[:new_h, :new_w] = resized_image
-        
-        # Create figure
-        fig, axes = plt.subplots(1, 2, figsize=(20, 10))
-        
-        # Plot original image with detections
-        axes[0].imshow(canvas)
-        axes[0].set_title("Original Image with Detections")
-        
-        for obj_idx, (bbox, class_id, conf) in enumerate(detections):
-            x1, y1, x2, y2 = bbox
-            class_name = class_names.get(class_id, f"Class {class_id}")
+        try:
+            print(f"Visualizing explanation to: {output_path}", flush=True)
             
-            # Draw bounding box
-            rect = plt.Rectangle((x1, y1), x2 - x1, y2 - y1, fill=False, edgecolor='red', linewidth=2)
-            axes[0].add_patch(rect)
+            # Create figure
+            plt.figure(figsize=(16, 8))
             
-            # Add label
-            axes[0].text(x1, y1 - 5, f"{class_name} {conf:.2f}", color='white', backgroundcolor='red', fontsize=10)
-        
-        # Plot combined saliency map
-        combined_saliency = np.zeros((self.image_size, self.image_size), dtype=np.float32)
-        for obj_idx in saliency_maps:
-            combined_saliency += saliency_maps[obj_idx]
-        
-        if np.max(combined_saliency) > 0:
-            combined_saliency = combined_saliency / np.max(combined_saliency)
-        
-        # Apply colormap to saliency map
-        heatmap = cm.jet(combined_saliency)[:, :, :3]
-        
-        # Overlay heatmap on image
-        alpha = 0.7
-        overlay = canvas.copy() / 255.0
-        for c in range(3):
-            overlay[:, :, c] = (1 - alpha) * overlay[:, :, c] + alpha * heatmap[:, :, c] * combined_saliency
-        
-        axes[1].imshow(overlay)
-        axes[1].set_title("BODEM Explanation")
-        
-        # Remove axes
-        for ax in axes:
-            ax.axis('off')
-        
-        plt.tight_layout()
-        
-        if output_path:
-            plt.savefig(output_path, bbox_inches='tight')
+            # Plot original image with detections
+            plt.subplot(1, 2, 1)
+            plt.imshow(image)
+            plt.title("Original Image with Detections")
+            
+            # Draw bounding boxes
+            for i, detection in enumerate(detections):
+                x1, y1, x2, y2 = detection.xyxy[0].cpu().numpy().astype(int)
+                cls_id = int(detection.cls[0].item())
+                conf = detection.conf[0].item()
+                
+                class_name = class_names.get(cls_id, f"Class {cls_id}")
+                label = f"{class_name} {conf:.2f}"
+                
+                # Create rectangle patch
+                plt.gca().add_patch(plt.Rectangle((x1, y1), x2-x1, y2-y1, fill=False, edgecolor='red', linewidth=2))
+                plt.text(x1, y1-10, label, color='red', fontsize=10, backgroundcolor='white')
+            
+            # Plot saliency map
+            plt.subplot(1, 2, 2)
+            
+            # Combine all saliency maps
+            combined_saliency = np.zeros_like(image[:, :, 0], dtype=np.float32)
+            for saliency_map in saliency_maps.values():
+                combined_saliency = np.maximum(combined_saliency, saliency_map)
+            
+            # Apply colormap to saliency
+            saliency_colored = cv2.applyColorMap((combined_saliency * 255).astype(np.uint8), cv2.COLORMAP_JET)
+            saliency_colored = cv2.cvtColor(saliency_colored, cv2.COLOR_BGR2RGB)
+            
+            # Overlay saliency on image
+            alpha = 0.7
+            overlay = cv2.addWeighted(image, 1-alpha, saliency_colored, alpha, 0)
+            
+            plt.imshow(overlay)
+            plt.title("Saliency Map")
+            
+            # Save figure
+            plt.tight_layout()
+            
+            # Make sure the output directory exists
+            os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+            
+            # Use non-interactive backend for matplotlib
+            plt.savefig(output_path)
             plt.close()
-        else:
-            plt.show()
+            
+            print(f"Explanation saved to: {output_path}", flush=True)
+            return True
+        except Exception as e:
+            print(f"Error in visualize_explanation: {str(e)}", flush=True)
+            import traceback
+            traceback.print_exc()
+            return False

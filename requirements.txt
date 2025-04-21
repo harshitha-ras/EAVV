@@ -4,3 +4,8 @@ pandas
 tqdm
 scikit-learn
 ultralytics
+fastapi 
+uvicorn 
+python-multipart 
+opencv-python-headless
+gunicorn

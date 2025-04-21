@@ -75,6 +75,8 @@ def analyze_dataset(model_path, dataset_path, output_dir, class_names, dataset_n
     # Apply BODEM to sampled images
     for image_path, weather in tqdm(sampled_images, desc=f"Analyzing {dataset_name}"):
         try:
+            # Add before generating explanation
+            print(f"Processing image: {image_path}")
             # Generate explanation
             image, detections, saliency_maps = explainer.explain(image_path)
             
@@ -85,6 +87,8 @@ def analyze_dataset(model_path, dataset_path, output_dir, class_names, dataset_n
                 
                 # Visualize and save explanation
                 explainer.visualize_explanation(image, detections, saliency_maps, class_names, output_path)
+            # Add after saving explanation
+            print(f"Saved explanation to: {output_path}")
         except Exception as e:
             print(f"Error processing {image_path}: {e}")
 

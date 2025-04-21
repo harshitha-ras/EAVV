@@ -2,7 +2,6 @@ oenv/
 __pycache__/
 *.pyc
 *.pyo
-*.pt
 EAVV/
 DAWN/
 dawn/

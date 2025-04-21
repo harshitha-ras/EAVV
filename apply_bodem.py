@@ -76,9 +76,10 @@ def analyze_dataset(model_path, dataset_path, output_dir, class_names, dataset_n
     for image_path, weather in tqdm(sampled_images, desc=f"Analyzing {dataset_name}"):
         try:
             # Add before generating explanation
-            print(f"Processing image: {image_path}")
+            tqdm.write(f"Processing image: {image_path}")
             # Generate explanation
             image, detections, saliency_maps = explainer.explain(image_path)
+            print(f"Found {len(detections)} detections in {image_path}", flush=True)
             
             if len(detections) > 0:
                 # Create output filename
@@ -87,10 +88,10 @@ def analyze_dataset(model_path, dataset_path, output_dir, class_names, dataset_n
                 
                 # Visualize and save explanation
                 explainer.visualize_explanation(image, detections, saliency_maps, class_names, output_path)
-            # Add after saving explanation
-            print(f"Saved explanation to: {output_path}")
+                tqdm.write(f"Saved explanation to: {output_path}")
         except Exception as e:
-            print(f"Error processing {image_path}: {e}")
+            tqdm.write(f"Error processing {image_path}: {e}")
+            tqdm.write(f"Error processing {output_path}: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description="Apply BODEM to analyze object detection datasets")

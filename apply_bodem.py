@@ -99,22 +99,23 @@ def analyze_dataset(model_path, dataset_path, output_dir, class_names, dataset_n
                 image_path = os.path.join(root, file)
                 
                 # Extract weather condition from filename or path
-                weather = None
-                if dataset_name == "DAWN":
-                    # For DAWN, weather is in the directory name
-                    parts = root.split(os.sep)
+                weather = "Unknown"  # Default
+                filename = os.path.basename(image_path)
+
+                # Try to extract weather from filename
+                weather_keywords = ["Rain", "Snow", "Sand", "Fog", "Dust", "Cloudy", "Sunny"]
+                for keyword in weather_keywords:
+                    if keyword.lower() in filename.lower():
+                        weather = keyword
+                        break
+
+                # If not found in filename, try directory path
+                if weather == "Unknown":
+                    parts = image_path.split(os.sep)
                     for part in parts:
-                        if part in ["Rain", "Snow", "Sand", "Fog"]:
+                        if part in weather_keywords:
                             weather = part
                             break
-                else:
-                    # For WEDGE, weather might be in the filename
-                    parts = file.split('_')
-                    if len(parts) > 1:
-                        for part in parts:
-                            if part.lower() in ["rain", "snow", "fog", "dust", "cloudy", "sunny"]:
-                                weather = part
-                                break
                 
                 if weather_conditions is None or weather in weather_conditions:
                     # Verify the image can be opened
@@ -234,25 +235,18 @@ def main():
     weather_conditions = ["Rain", "Snow", "Sand", "Fog", "Dust", "Unknown"]
     print(f"Weather conditions to analyze: {weather_conditions}", flush=True)
     
-    # Analyze DAWN dataset
-    dawn_path = os.path.join(test_path, "DAWN")
-    if os.path.exists(dawn_path):
-        print(f"Found DAWN dataset at {dawn_path}", flush=True)
-        dawn_output = os.path.join(args.output, "DAWN")
-        analyze_dataset(args.model, dawn_path, dawn_output, class_names, "DAWN", 
-                       weather_conditions, args.samples, args.device)
+   
+    if os.path.exists(test_path):
+        print(f"Found test images at {test_path}", flush=True)
+        test_output = os.path.join(args.output, "test_explanations")
+        os.makedirs(test_output, exist_ok=True)
+        
+        # Modify analyze_dataset call to work with combined dataset
+        analyze_dataset(args.model, test_path, test_output, class_names, "combined", 
+                    weather_conditions, args.samples, args.device)
     else:
-        print(f"DAWN dataset not found at {dawn_path}", flush=True)
+        print(f"Test images not found at {test_path}", flush=True)
     
-    # Analyze WEDGE dataset
-    wedge_path = os.path.join(test_path, "WEDGE")
-    if os.path.exists(wedge_path):
-        print(f"Found WEDGE dataset at {wedge_path}", flush=True)
-        wedge_output = os.path.join(args.output, "WEDGE")
-        analyze_dataset(args.model, wedge_path, wedge_output, class_names, "WEDGE", 
-                       weather_conditions, args.samples, args.device)
-    else:
-        print(f"WEDGE dataset not found at {wedge_path}", flush=True)
     
     print("\nBODEM analysis complete", flush=True)
 

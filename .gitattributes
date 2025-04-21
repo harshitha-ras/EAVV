@@ -1,3 +1,4 @@
 *.pt filter=lfs diff=lfs merge=lfs -text
+.zip filter=lfs diff=lfs merge=lfs -text
 *.zip filter=lfs diff=lfs merge=lfs -text
 NVIDIA-Linux-x86_64-550.54.15.run filter=lfs diff=lfs merge=lfs -text

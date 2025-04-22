@@ -1,64 +1,68 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from ultralytics import YOLO
 import cv2
 import numpy as np
-from ultralytics import YOLO
-import io
+import os
+from werkzeug.utils import secure_filename
 
-app = FastAPI(title="Weather Condition Object Detection API")
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
-# Load your trained model
-model = YOLO("yolo_output/yolov8s_weather_refined/weights/best.pt")
+# Load your YOLOv8 model
+model_path = "/home/harsh/EAVV/yolo_output/yolov8s_weather_refined/weights/best.pt"
+model = YOLO(model_path)
 
-# Configure CORS to allow requests from your frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Update with your frontend URL in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+UPLOAD_FOLDER = '/tmp/uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-@app.post("/detect/")
-async def detect_objects(file: UploadFile = File(...)):
-    """
-    Endpoint to detect objects in an image with weather condition awareness
-    """
+@app.route('/api/detect', methods=['POST'])
+def detect_objects():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image provided'}), 400
+    
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'error': 'No image selected'}), 400
+    
+    # Save the uploaded file temporarily
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+    
     try:
-        # Read image
-        contents = await file.read()
-        image = np.frombuffer(contents, dtype=np.uint8)
-        image = cv2.imdecode(image, cv2.IMREAD_COLOR)
-        
         # Perform detection
-        results = model(image)
+        results = model(filepath)
         
         # Process results
-        detections = []
-        for i, det in enumerate(results[0].boxes):
-            x1, y1, x2, y2 = map(float, det.xyxy[0])
-            confidence = float(det.conf[0])
-            class_id = int(det.cls[0])
-            class_name = model.names[class_id]
-            
-            detections.append({
-                "id": i,
-                "class": class_name,
-                "confidence": round(confidence, 3),
-                "bbox": [round(x1), round(y1), round(x2), round(y2)]
-            })
-            
-        return {"detections": detections}
+        result_data = []
+        for result in results:
+            boxes = result.boxes.cpu().numpy()
+            for box in boxes:
+                x1, y1, x2, y2 = box.xyxy[0].astype(int)
+                confidence = float(box.conf[0])
+                class_id = int(box.cls[0])
+                class_name = model.names[class_id]
+                
+                result_data.append({
+                    'class': class_name,
+                    'confidence': confidence,
+                    'bbox': [int(x1), int(y1), int(x2), int(y2)]
+                })
+        
+        return jsonify({
+            'success': True,
+            'detections': result_data
+        })
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return jsonify({'error': str(e)}), 500
+    finally:
+        # Clean up the temporary file
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
-@app.get("/health")
-def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "model": "YOLOv8s Weather Refined"}
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)

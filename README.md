@@ -28,6 +28,8 @@ Emphasizes diverse traffic environments (urban, highway, freeway)
 
 Annotated with object bounding boxes for autonomous driving
 
+
+
 WEDGE (Multi-Weather Autonomous Driving)
 3,360 synthetic images with simulated weather conditions
 
@@ -37,7 +39,32 @@ Includes 16 extreme weather conditions with 210 images per class
 
 Manually annotated with 16,513 bounding boxes
 
-Model Performance
+
+## Exploratory Data Analysis
+Object class distribution
+![image](https://github.com/user-attachments/assets/c596e776-6802-4645-a365-7b5721973149)
+
+Bounding Box distribution
+![image](https://github.com/user-attachments/assets/e4a1ef7f-a2d6-46dc-8b54-af8c230fc779)
+![image](https://github.com/user-attachments/assets/2ca5a3b0-d76e-4cd8-8774-66d8b0336178)
+![image](https://github.com/user-attachments/assets/05f5e5ef-814c-40ca-a436-c246f07d206f)
+
+
+- Strong concentration of objects in lower dimensions (0-200 pixels)
+- Weather-specific patterns:
+- Day conditions show wider spatial distribution
+- Night scenes have concentrated clusters in lower regions
+- Tornado and hurricane conditions show distinct clustering patterns
+- Spring and summer scenes display more dispersed object locations
+
+Aspect Ratio Distribution
+![image](https://github.com/user-attachments/assets/9e6cecfb-e246-49f6-9153-ef56307e7235)
+- Most objects across weather conditions have aspect ratios between 0-2
+- Peak density occurs around aspect ratio of 0.5-1.0
+- Long tail distribution extending to aspect ratio of 5
+- Different weather conditions show similar aspect ratio patterns
+
+## Model Performance
 Our weather-refined YOLOv8s model achieves:
 
 mAP50: 0.496 (49.6%)

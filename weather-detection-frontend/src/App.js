@@ -7,7 +7,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>Weather Condition Object Detection</h1>
-        <p>Detect objects in various weather conditions with YOLOv8</p>
+        <p>Advanced detection in adverse weather using YOLOv8</p>
       </header>
       
       <main>
@@ -15,7 +15,7 @@ function App() {
       </main>
       
       <footer className="App-footer">
-        <p>DAWN-WEDGE Weather Detection Project - 2025</p>
+        <p>DAWN-WEDGE Weather Detection Project &copy; 2025</p>
       </footer>
     </div>
   );

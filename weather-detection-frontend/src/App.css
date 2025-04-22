@@ -1,77 +1,89 @@
+/* App.css - Main application styles */
+:root {
+  --primary-color: #3498db;
+  --secondary-color: #2ecc71;
+  --accent-color: #f39c12;
+  --dark-color: #2c3e50;
+  --light-color: #ecf0f1;
+  --danger-color: #e74c3c;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --border-radius: 8px;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f5f7fa;
+  margin: 0;
+  padding: 0;
+}
+
 .App {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  font-family: Arial, sans-serif;
 }
 
 .App-header {
   text-align: center;
+  padding: 30px 0;
   margin-bottom: 30px;
-}
-
-.upload-section {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-  gap: 10px;
-}
-
-.file-input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.detect-button {
-  padding: 10px 20px;
-  background-color: #4CAF50;
+  background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
   color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
 }
 
-.detect-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
+.App-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 600;
 }
 
-.error-message {
-  color: red;
-  text-align: center;
-  margin-bottom: 20px;
+.App-header p {
+  margin: 10px 0 0;
+  font-size: 1.2rem;
+  opacity: 0.9;
 }
 
-.results-container {
-  display: flex;
-  justify-content: center;
-}
-
-.image-container {
+main {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 30px;
 }
 
-.detection-canvas {
-  max-width: 100%;
-  border: 1px solid #ddd;
-  margin-bottom: 20px;
+.card {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 25px;
+  transition: transform 0.3s ease;
 }
 
-.detections-list {
-  width: 100%;
-  max-width: 600px;
-  padding: 15px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
+.card:hover {
+  transform: translateY(-5px);
 }
 
-.detections-list ul {
-  padding-left: 20px;
+.App-footer {
+  text-align: center;
+  margin-top: 50px;
+  padding: 20px 0;
+  color: #7f8c8d;
+  border-top: 1px solid #ddd;
 }
 
-.detections-list li {
-  margin-bottom: 5px;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .App {
+    padding: 15px;
+  }
+  
+  .App-header {
+    padding: 20px 0;
+  }
+  
+  .App-header h1 {
+    font-size: 2rem;
+  }
 }

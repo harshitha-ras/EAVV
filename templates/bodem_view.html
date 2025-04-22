@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BODEM Explanation Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+        .file-input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 300px;
+        }
+        .explain-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .explain-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+            margin: 15px 0;
+        }
+        .explanation-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .explanation-image {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            margin-top: 20px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .explanation-details {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 800px;
+        }
+    </style>
+</head>
+<body>
+    <h1>BODEM Explanation Viewer</h1>
+    
+    <div class="upload-section">
+        <p>Upload an image to generate a BODEM explanation of how the model detects objects in various weather conditions.</p>
+        <input type="file" id="imageUpload" accept="image/*" class="file-input">
+        <button id="explainButton" class="explain-button">Generate BODEM Explanation</button>
+    </div>
+    
+    <div id="errorMessage" class="error-message"></div>
+    <div id="loading" class="loading">Generating explanation... This may take a moment.</div>
+    
+    <div id="explanationContainer" class="explanation-container" style="display: none;">
+        <h2>BODEM Explanation</h2>
+        <div class="explanation-details">
+            <p>The visualization below shows:</p>
+            <ul>
+                <li><strong>Left side:</strong> Original image with object detections</li>
+                <li><strong>Right side:</strong> Saliency map showing which parts of the image influenced the model's decisions</li>
+            </ul>
+            <p>Brighter areas in the saliency map indicate regions that were more important for the model's detection decisions.</p>
+        </div>
+        <img id="explanationImage" class="explanation-image">
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const imageUpload = document.getElementById('imageUpload');
+            const explainButton = document.getElementById('explainButton');
+            const errorMessage = document.getElementById('errorMessage');
+            const loading = document.getElementById('loading');
+            const explanationContainer = document.getElementById('explanationContainer');
+            const explanationImage = document.getElementById('explanationImage');
+            
+            explainButton.addEventListener('click', function() {
+                if (!imageUpload.files || imageUpload.files.length === 0) {
+                    errorMessage.textContent = 'Please select an image first.';
+                    return;
+                }
+                
+                const file = imageUpload.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                // Clear previous results and show loading
+                errorMessage.textContent = '';
+                explanationContainer.style.display = 'none';
+                loading.style.display = 'block';
+                explainButton.disabled = true;
+                
+                // Send request to generate BODEM explanation
+                fetch('/bodem_explain', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    explainButton.disabled = false;
+                    
+                    if (data.error) {
+                        errorMessage.textContent = data.error;
+                        return;
+                    }
+                    
+                    // Display the explanation
+                    explanationImage.src = data.explanation_path + '?t=' + new Date().getTime(); // Add timestamp to prevent caching
+                    explanationContainer.style.display = 'flex';
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    explainButton.disabled = false;
+                    errorMessage.textContent = 'An error occurred: ' + error.message;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

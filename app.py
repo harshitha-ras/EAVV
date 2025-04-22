@@ -16,11 +16,8 @@ CORS(app)  # Enable CORS for all routes
 model_path = "/home/harsh/EAVV/yolo_output/yolov8s_weather_refined/weights/best.pt"
 model = YOLO(model_path)
 
-# Initialize BODEM explainer
-explainer = BODEMExplainer(model_path, image_size=640, device='cpu')
-
-@app.route('/bodem_explain', methods=['POST'])
-def bodem_explain():
+@app.route('/api/bodem_explain', methods=['POST'])
+def bodem_explain_api():
     """Generate BODEM explanation for an uploaded image"""
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
@@ -34,6 +31,10 @@ def bodem_explain():
     file.save(temp_path)
     
     try:
+        # Initialize BODEM explainer if not already done
+        model_path = "yolo_output/yolov8s_weather_refined/weights/best.pt"
+        explainer = BODEMExplainer(model_path, image_size=640, device='cpu')
+        
         # Generate BODEM explanation
         image, detections, saliency_maps = explainer.explain(temp_path)
         
@@ -50,7 +51,7 @@ def bodem_explain():
         # Return the path to the generated visualization
         return jsonify({
             'success': True,
-            'explanation_path': output_path,
+            'explanation_path': '/static/bodem_explanation.png',
             'num_detections': len(detections)
         })
     
@@ -62,10 +63,6 @@ def bodem_explain():
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
-@app.route('/view_bodem', methods=['GET'])
-def view_bodem():
-    """Render a page to view BODEM explanations"""
-    return render_template('bodem_view.html')
 
 UPLOAD_FOLDER = '/tmp/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)

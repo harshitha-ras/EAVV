@@ -62,28 +62,28 @@ mAP50-95: 0.25 (25.0%)
 Performance varies significantly across different object classes:
 
 
-## Class	    mAP50	    mAP50-95	    Precision	    Recall
+## Class	            mAP50	            mAP50-95	            Precision	            Recall
 
 
-### person	    0.650	    0.255	            0.758	    0.582
+### person	            0.650	            0.255	                    0.758	            0.582
 
 
-### bicycle	    0.000	    0.000	            1.000	    0.000
+### bicycle	            0.000	            0.000	                    1.000	            0.000
 
 
-### car	        0.632	     0.281	            0.751	    0.560
+### car	                0.632	            0.281	                    0.751	            0.560
 
 
-### motorcycle	0.299	    0.141	            0.311	    0.375
+### motorcycle	        0.299	            0.141	                    0.311	            0.375
 
 
-### bus	        0.727	    0.437	            0.801	    0.669
+### bus	                0.727	            0.437	                    0.801	            0.669
+
+ 
+### truck	            0.730	            0.376	                    0.777	            0.626
 
 
-### truck	    0.730	    0.376	            0.777	    0.626
-
-
-## Overall	    0.506	    0.248	            0.733	    0.469
+## Overall	            0.506	            0.248	                    0.733	            0.469
 
 
 ## Explainability Through BODEM

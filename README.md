@@ -1,117 +1,53 @@
-# Enhanced Autonomous Vehicle Vision
+# Explainable Object Detection System
+
+
+Website:  http://35.226.168.195:5001/
+
+
 
 ## Executive Summary
 
+The Explainable Object Detection System is an advanced computer vision solution specifically designed to work in adverse weather conditions while providing transparent explanations of its detection decisions. This project combines real-world and synthetic datasets to create a robust detection model that can identify objects in challenging weather scenarios such as fog, rain, snow, and dust.
 
-EAVV combines real-world and synthetic data for autonomous vehicle perception in adverse weather conditions. By merging DAWN's real-world imagery with WEDGE's synthetic data, we address the critical challenge of reliable object detection across diverse weather scenarios. This dataset enables robust model training while reducing the risks and costs associated with collecting real-world data in dangerous weather conditions.
+The system addresses a critical need for autonomous vehicles and surveillance systems to function reliably across all weather conditions, which is essential for safe autonomous driving systems. By incorporating explainability through BODEM (Boundary-based Object Detection Explanation Method), it provides insights into how the model makes decisions in different weather conditions.
 
+## Features
+Weather-Robust Detection: Specialized training for fog, rain, snow, and dust conditions
 
-## Potential Applications
+Dual-Dataset Approach: Combines real-world DAWN dataset with synthetic WEDGE dataset
 
+Explainable AI: BODEM visualization to understand model decision-making
 
-- Autonomous vehicle vision systems
-- Weather-robust object detection
-- Domain adaptation research
-- Synthetic-to-real transfer learning
-- Safety system development
+Web Interface: Interactive application for uploading and analyzing images
 
-## Folder Structure
+Multiple Model Options: YOLOv8n (lightweight) and YOLOv8s (enhanced accuracy)
 
-EAVV/
-├── EAVV.zip               # Contains all XML annotations and PNG images
+## Datasets
+DAWN (Detection in Adverse Weather Nature)
+1,027 real-world traffic images captured in various adverse weather conditions
 
-├── format.py              # Script for standardizing XML annotations
+Includes fog, snow, rain, and sandstorm scenarios
 
-├── EDA.py                # Script for generating visualizations and analysis
+Emphasizes diverse traffic environments (urban, highway, freeway)
 
-├── setup.py              # Package configuration and dependencies
-
-├── requirements.txt      # Python package dependencies
-
-└── README.md             # Project documentation
-
-## Instructions
-
-- Clone the repository
-- unzip the EAVV folder
-- install requirements.txt
+Annotated with object bounding boxes for autonomous driving
 
 
-## Description of Data
 
+WEDGE (Multi-Weather Autonomous Driving)
+3,360 synthetic images with simulated weather conditions
 
-Dataset Composition
-- DAWN: 1000 real-traffic images, 7,846 objects
-- WEDGE: 3,360 synthetic images, 16,513 objects
-- Combined: 24,359 annotated objects
+Generated using DALL-E 2 with prompts in the format {Objects} on {scenes} when {weather}
 
-## Image Properties
+Includes 16 extreme weather conditions with 210 images per class
 
-
-- DAWN Resolution: 1280x675 pixels (864,000 pixels)
-- WEDGE Resolution: 640x640 pixels (409,600 pixels)
-- XML annotations with standardized format
-
-## Class Distribution
-
-
-DAWN:
-- Cars: 82.3%
-- Trucks: 8.2%
-- Persons: 6.1%
-- Buses: 2.1%
-- Other: 1.3%
-
-
-WEDGE:
-- Cars: 40.4%
-- Persons: 36.5%
-- Trucks: 14.5%
-- Buses: 6.9%
-- Other: 1.7%
-
-
-## Power Analysis Results
-
-
-The combined dataset provides:
-- 24,359 total annotated objects
-- Coverage across 20 weather conditions
-- Balanced class representation through synthetic data
-- Diverse object sizes and positions (shown in hexbin plots)
-- Complementary resolution characteristics
+Manually annotated with 16,513 bounding boxes
 
 
 ## Exploratory Data Analysis
 Object class distribution
 ![image](https://github.com/user-attachments/assets/c596e776-6802-4645-a365-7b5721973149)
 
-
-DAWN Dataset:
-- Highly skewed towards cars across all weather conditions
-- Consistent pattern across fog, rain, sand, and snow
-- Limited representation of smaller objects like bicycles and motorcycles
-
-
-WEDGE Dataset:
-- More balanced distribution across object classes
-- Varied object counts across different weather conditions
-- Better representation of persons and trucks
-- Consistent presence of multiple object classes across weather types
-
-
-Bounding Box distribution
-![image](https://github.com/user-attachments/assets/e4a1ef7f-a2d6-46dc-8b54-af8c230fc779)
-![image](https://github.com/user-attachments/assets/2ca5a3b0-d76e-4cd8-8774-66d8b0336178)
-![image](https://github.com/user-attachments/assets/05f5e5ef-814c-40ca-a436-c246f07d206f)
-
-
-- Strong concentration of objects in lower dimensions (0-200 pixels)
-- Weather-specific patterns:
-- Day conditions show wider spatial distribution
-- Night scenes have concentrated clusters in lower regions
-- Tornado and hurricane conditions show distinct clustering patterns
-- Spring and summer scenes display more dispersed object locations
 
 Aspect Ratio Distribution
 ![image](https://github.com/user-attachments/assets/9e6cecfb-e246-49f6-9153-ef56307e7235)
@@ -120,33 +56,281 @@ Aspect Ratio Distribution
 - Long tail distribution extending to aspect ratio of 5
 - Different weather conditions show similar aspect ratio patterns
 
+## Model Performance
+Our weather-refined YOLOv8s model achieves:
 
-Weather Condition Coverage
+mAP50: 0.496 (49.6%)
+
+mAP50-95: 0.25 (25.0%)
+
+Performance varies significantly across different object classes:
 
 
-- DAWN focuses on four primary conditions with similar object counts
-- WEDGE provides broader coverage including seasonal and time-of-day variations
-- Different density patterns in hexbin plots suggest varying object detection challenges across weather conditions
+## Detection Performance
 
-## Resolution Analysis
-- Bimodal distribution showing clear separation between datasets
-- DAWN: Higher resolution for detailed feature capture
-- WEDGE: Standardized resolution for consistent processing
+| Class       | mAP50 | mAP50-95 | Precision | Recall |
+|-------------|-------|----------|-----------|--------|
+| person      | 0.650 | 0.255    | 0.758     | 0.582  |
+| bicycle     | 0.000 | 0.000    | 1.000     | 0.000  |
+| car         | 0.632 | 0.281    | 0.751     | 0.560  |
+| motorcycle  | 0.299 | 0.141    | 0.311     | 0.375  |
+| bus         | 0.727 | 0.437    | 0.801     | 0.669  | 
+| truck       | 0.730 | 0.376    | 0.777     | 0.626  |
+| **Overall** | 0.506 | 0.248    | 0.733     | 0.469  |
 
-## Class Balance
-- DAWN shows strong bias toward cars
-- WEDGE provides more balanced class distribution
-- Combined dataset offers improved representation across classes
 
-## Ethics Statement
 
-- Ensures privacy in real-world data
-- Addresses class imbalance and bias
-- Promotes safer data collection through synthetic data
-- Restricted to research purposes
-- Transparent documentation of limitations
+## Explainability Through BODEM
+Fog conditions showed highest mean saliency (0.3711), indicating concentrated feature attention
+
+Dust conditions showed lowest mean saliency (0.3315), suggesting more distributed visual cues
+
+Model relies heavily on silhouettes in fog and edge detection across all conditions
+
+Identified weather-specific adaptations in how the model processes different conditions
+
+## Installation
+
+
+### Prerequisites
+
+
+Python 3.8+
+
+Node.js (for web interface)
+
+CUDA-compatible GPU (recommended)
+
+### Setup
+
+git clone https://github.com/harshitha-ras/explainable-object-detection.git
+cd explainable-object-detection
+python -m venv oenv
+source oenv/bin/activate  # On Windows: oenv\Scripts\activate
+pip install -r requirements.txt
+pip install -e .
+cd weather-detection-frontend
+npm install
+npm run build
+
+
+## Usage
+### Data Preparation
+
+Convert XML annotations to YOLO format:
+python convert_xml_to_yolo.py
+
+Split dataset into train/val/test:
+python data_prep.py
+
+
+### Training
+
+Train YOLOv8 model with weather refinements (CPU):
+python train_yolov8.py --mode train --model n --epochs 50 --batch 2 --img-size 640 --data weather_data.yaml --device cpu --oversample --weather-balance --progressive
+
+Train with GPU (if available):
+python train_yolov8.py --mode train --model s --epochs 100 --batch 16 --img-size 640 --data weather_data.yaml --device 0 --oversample --weather-balance --progressive
+
+
+### Validation and Inference
+
+Validate trained model:
+python train_yolov8.py --mode validate --weights yolo_output/yolov8s_weather_refined/weights/best.pt --data weather_data.yaml
+
+Run inference on test images:
+python train_yolov8.py --mode predict --weights yolo_output/yolov8s_weather_refined/weights/best.pt --source merged_dataset/test/images --conf 0.25
+
+
+### Explainable AI Analysis
+
+Generate BODEM explanations:
+python apply_bodem.py --model yolo_output/yolov8s_weather_refined/weights/best.pt --data weather_data.yaml --output bodem_explanations --samples 10
+
+Analyze explanations: 
+python analyze_bodem.py --dir bodem_explanations
+
+
+## Web Application
+1. Start the Flask application:
+
+python app.py
+
+2. Access the web interface at http://localhost:5001
+
+3. Upload images through the browser interface
+
+4. View detection results with bounding boxes and confidence scores
+
+5. Generate BODEM explanations to understand model decisions
+
+
+
+## Project Structure
+
+
+EAVV/                      # Main package
+├── README.md
+├── requirements.txt
+├── setup.py
+├── app.py
+├── scripts/
+│   ├── build_features.py
+│   ├── model.py
+│   ├── convert_to_yolo.py
+│   ├── data_prep.py
+|   ├── format_xmls.py
+│   ├── train_yolov8.py
+│   ├── apply_bodem.py
+│   ├── analyze_bodem.py
+│   └── bodem_explainer.py
+├── models/
+│   └── yolo_output/yolov8s_weather_refined.pt
+├── data/
+│   ├── raw/
+│   ├── processed/
+│   └── outputs/
+├── notebooks/
+│   └── EDA.ipynb
+├── .gitignore
+├── weather-detection-frontend/
+
+
+
+## Comparisions
+
+### Strengths and Limitations
+
+
+#### Deep Learning (YOLOv8)
+
+
+Strengths:
+
+
+- Highest accuracy and performance across most metrics.
+
+- Ability to detect patterns regardless of position in the image.
+
+- Better generalization to unseen data and conditions.
+
+- Handles variability and complex, high-dimensional data well.
+
+Limitations:
+
+
+- Requires substantial computational resources (especially for training).
+
+- Acts as a "black box" with limited explainability.
+
+- Needs large amounts of labeled data for training.
+
+- Model size can be prohibitive for some applications.
+
+
+
+#### Traditional Computer Vision
+
+
+Strengths:
+
+- Works well with limited training data.
+
+- More interpretable and explainable.
+
+- Faster to implement for specific, well-defined tasks.
+
+- Requires less computational resources than deep learning.
+
+Limitations:
+
+- Lower accuracy compared to deep learning approaches.
+
+- Limited to objects with prominent features (struggles with uniform objects).
+
+- Requires significant manual effort for feature engineering.
+
+- Less adaptable to new tasks or changes in the environment.
+
+
+
+#### Naive Methods
+
+
+
+Strengths:
+
+- Minimal computational requirements.
+
+- Simple implementation and fast inference.
+
+- Works reasonably well for basic classification tasks.
+
+Limitations:
+
+- Lowest accuracy among the three approaches.
+
+- Assumption of feature independence often doesn't hold true.
+
+- Performance drops significantly with larger datasets.
+
+- Not suitable for complex object detection tasks.
+
+### Weather Condition Performance
+
+
+The DAWN-WEDGE dataset specifically focuses on adverse weather conditions, where the performance differences become even more pronounced:
+
+
+Deep Learning (YOLOv8)
+
+
+- Maintains relatively consistent performance across different weather conditions.
+
+- Shows good detection capabilities in fog, rain, snow, and dust conditions.
+
+- Class-specific performance varies (e.g., bus: mAP50 of 0.624, truck: mAP50 of 0.607).
+
+Traditional Computer Vision
+
+
+- Performance degrades significantly in adverse weather conditions.
+
+- Feature matching becomes unreliable in low-visibility conditions.
+
+- Struggles with detecting objects in fog, snow, and rain due to feature distortion.
+
+
+
+Naive Methods
+
+
+- Performs poorly in adverse weather conditions.
+
+- Cannot adapt to changing visual characteristics caused by weather effects.
+
+- Lacks the sophistication needed for robust detection in challenging environments.
+
+
+
+
+## Citation
+If you use this project in your research, please cite:
+
+@software{ExplainableObjectDetection2025,
+  author = {Harshitha, Rasamsetty},
+  title = {Explainable Object Detection System},
+  url = {https://github.com/harshitha-ras/EAVV},
+  year = {2025},
+}
+
 
 ## License
-Combined dataset: MIT
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-Link to dataset: https://www.kaggle.com/datasets/supernova5000/enhanced-autonomous-vehicle-vision/
+## Acknowledgments
+DAWN dataset from IEEE DataPort
+
+Ultralytics for YOLOv8 implementation
+
+The research community working on object detection in adverse weather conditions

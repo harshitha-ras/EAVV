@@ -1,0 +1,13 @@
+names:
+  0: person
+  1: bicycle
+  2: car
+  3: motorcycle
+  4: bus
+  5: train
+  6: truck
+  7: van
+path: /home/harsh/EAVV/merged_dataset
+test: test/images
+train: train_weather_balanced/images
+val: val/images

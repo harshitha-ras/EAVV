@@ -1,0 +1,12 @@
+oenv/
+__pycache__/
+*.pyc
+*.pyo
+EAVV/
+DAWN/
+dawn/
+images/
+wedge/
+merged_dataset
+DAWN.zip
+dawn.zip

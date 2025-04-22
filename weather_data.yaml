@@ -1,0 +1,17 @@
+# Dataset configuration for DAWN-WEDGE merged dataset
+path: /home/harsh/EAVV/merged_dataset  # Absolute path to dataset root
+train: train/images
+val: val/images
+test: test/images
+
+# Classes
+names:
+  0: person
+  1: bicycle
+  2: car
+  3: motorcycle
+  4: bus
+  5: train
+  6: truck
+  7: van
+  # Add other classes as needed

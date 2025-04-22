@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { TailSpin } from "react-loader-spinner";
 import './BODEMExplanation.css';
 
 const BODEMExplanation = () => {
@@ -100,7 +101,20 @@ const BODEMExplanation = () => {
           </div>
         )}
         
-        {explanationUrl && (
+        {isLoading && (
+          <div className="loading-container">
+            <TailSpin
+              color="#4285f4"
+              height={80}
+              width={80}
+              radius={1}
+              visible={true}
+            />
+            <p>Generating BODEM explanation... This may take a moment.</p>
+          </div>
+        )}
+        
+        {explanationUrl && !isLoading && (
           <div className="explanation-preview">
             <h3>BODEM Explanation</h3>
             <img src={explanationUrl} alt="BODEM Explanation" />

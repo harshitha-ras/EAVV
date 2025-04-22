@@ -58,3 +58,21 @@ pre {
   word-wrap: break-word;
 }
 
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.loading-container p {
+  margin-top: 15px;
+  color: #4285f4;
+  font-weight: 500;
+}

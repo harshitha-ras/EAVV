@@ -164,24 +164,33 @@ python app.py
 
 ## Project Structure
 
-explainable-object-detection/
-├── eavv/                      # Main package
-│   ├── __init__.py
-│   ├── app.py                 # Web application
-│   ├── apply_bodem.py         # BODEM explanation generator
-│   ├── analyze_bodem.py       # BODEM analysis tools
-│   ├── bodem_explainer.py     # BODEM implementation
-│   ├── convert_xml_to_yolo.py # Annotation converter
-│   ├── data_prep.py           # Dataset preparation
-│   └── train_yolov8.py        # YOLOv8 training script
-├── weather-detection-frontend/ # React frontend
-├── merged_dataset/            # Combined DAWN and WEDGE datasets
-├── yolo_output/               # Trained models
-├── bodem_explanations/        # BODEM visualization outputs
-├── static/                    # Static files for web app
-├── templates/                 # HTML templates
-├── setup.py                   # Package installation
-└── README.md                  # This file
+
+EAVV/                      # Main package
+├── README.md
+├── requirements.txt
+├── setup.py
+├── app.py
+├── scripts/
+│   ├── make_dataset.py
+│   ├── build_features.py
+│   ├── model.py
+│   ├── convert_to_yolo.py
+│   ├── data_prep.py
+|   └── format_xmls.py
+│   ├── train_yolov8.py
+│   ├── apply_bodem.py
+│   ├── analyze_bodem.py
+│   └── bodem_explainer.py
+├── models/
+│   └── yolo_output/yolov8s_weather_refined.pt
+├── data/
+│   ├── raw/
+│   ├── processed/
+│   └── outputs/
+├── notebooks/
+│   └── EDA.ipynb
+├── .gitignore
+├── weather-detection-frontend/
 
 
 ## Citation

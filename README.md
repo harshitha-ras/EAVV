@@ -171,12 +171,11 @@ EAVV/                      # Main package
 ├── setup.py
 ├── app.py
 ├── scripts/
-│   ├── make_dataset.py
 │   ├── build_features.py
 │   ├── model.py
 │   ├── convert_to_yolo.py
 │   ├── data_prep.py
-|   └── format_xmls.py
+|   ├── format_xmls.py
 │   ├── train_yolov8.py
 │   ├── apply_bodem.py
 │   ├── analyze_bodem.py
@@ -191,6 +190,124 @@ EAVV/                      # Main package
 │   └── EDA.ipynb
 ├── .gitignore
 ├── weather-detection-frontend/
+
+
+
+## Comparisions
+
+### Strengths and Limitations
+
+
+#### Deep Learning (YOLOv8)
+
+
+Strengths:
+
+
+- Highest accuracy and performance across most metrics.
+
+- Ability to detect patterns regardless of position in the image.
+
+- Better generalization to unseen data and conditions.
+
+- Handles variability and complex, high-dimensional data well.
+
+Limitations:
+
+
+- Requires substantial computational resources (especially for training).
+
+- Acts as a "black box" with limited explainability.
+
+- Needs large amounts of labeled data for training.
+
+- Model size can be prohibitive for some applications.
+
+
+
+#### Traditional Computer Vision
+
+
+Strengths:
+
+- Works well with limited training data.
+
+- More interpretable and explainable.
+
+- Faster to implement for specific, well-defined tasks.
+
+- Requires less computational resources than deep learning.
+
+Limitations:
+
+- Lower accuracy compared to deep learning approaches.
+
+- Limited to objects with prominent features (struggles with uniform objects).
+
+- Requires significant manual effort for feature engineering.
+
+- Less adaptable to new tasks or changes in the environment.
+
+
+
+#### Naive Methods
+
+
+
+Strengths:
+
+- Minimal computational requirements.
+
+- Simple implementation and fast inference.
+
+- Works reasonably well for basic classification tasks.
+
+Limitations:
+
+- Lowest accuracy among the three approaches.
+
+- Assumption of feature independence often doesn't hold true.
+
+- Performance drops significantly with larger datasets.
+
+- Not suitable for complex object detection tasks.
+
+### Weather Condition Performance
+
+
+The DAWN-WEDGE dataset specifically focuses on adverse weather conditions, where the performance differences become even more pronounced:
+
+
+Deep Learning (YOLOv8)
+
+
+- Maintains relatively consistent performance across different weather conditions.
+
+- Shows good detection capabilities in fog, rain, snow, and dust conditions.
+
+- Class-specific performance varies (e.g., bus: mAP50 of 0.624, truck: mAP50 of 0.607).
+
+Traditional Computer Vision
+
+
+- Performance degrades significantly in adverse weather conditions.
+
+- Feature matching becomes unreliable in low-visibility conditions.
+
+- Struggles with detecting objects in fog, snow, and rain due to feature distortion.
+
+
+
+Naive Methods
+
+
+- Performs poorly in adverse weather conditions.
+
+- Cannot adapt to changing visual characteristics caused by weather effects.
+
+- Lacks the sophistication needed for robust detection in challenging environments.
+
+
 
 
 ## Citation

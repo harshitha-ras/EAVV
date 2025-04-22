@@ -1,11 +1,13 @@
-Explainable Object Detection System
+# Explainable Object Detection System
 [![License: MIT](tps://img.shields.io/badge/Licens
 
-##The Explainable Object Detection System is an advanced computer vision solution specifically designed to work in adverse weather conditions while providing transparent explanations of its detection decisions. This project combines real-world and synthetic datasets to create a robust detection model that can identify objects in challenging weather scenarios such as fog, rain, snow, and dust.
+## Executive Summary
+
+The Explainable Object Detection System is an advanced computer vision solution specifically designed to work in adverse weather conditions while providing transparent explanations of its detection decisions. This project combines real-world and synthetic datasets to create a robust detection model that can identify objects in challenging weather scenarios such as fog, rain, snow, and dust.
 
 The system addresses a critical need for autonomous vehicles and surveillance systems to function reliably across all weather conditions, which is essential for safe autonomous driving systems. By incorporating explainability through BODEM (Boundary-based Object Detection Explanation Method), it provides insights into how the model makes decisions in different weather conditions.
 
-Features
+## Features
 Weather-Robust Detection: Specialized training for fog, rain, snow, and dust conditions
 
 Dual-Dataset Approach: Combines real-world DAWN dataset with synthetic WEDGE dataset
@@ -16,7 +18,7 @@ Web Interface: Interactive application for uploading and analyzing images
 
 Multiple Model Options: YOLOv8n (lightweight) and YOLOv8s (enhanced accuracy)
 
-Datasets
+## Datasets
 DAWN (Detection in Adverse Weather Nature)
 1,027 real-world traffic images captured in various adverse weather conditions
 
@@ -55,7 +57,7 @@ truck	    0.730	    0.376	            0.777	    0.626
 Overall	    0.506	    0.248	            0.733	    0.469
 
 
-Explainability Through BODEM
+## Explainability Through BODEM
 Fog conditions showed highest mean saliency (0.3711), indicating concentrated feature attention
 
 Dust conditions showed lowest mean saliency (0.3315), suggesting more distributed visual cues
@@ -64,15 +66,19 @@ Model relies heavily on silhouettes in fog and edge detection across all conditi
 
 Identified weather-specific adaptations in how the model processes different conditions
 
-Installation
-Prerequisites
+## Installation
+
+
+### Prerequisites
+
+
 Python 3.8+
 
 Node.js (for web interface)
 
 CUDA-compatible GPU (recommended)
 
-Setup
+### Setup
 
 git clone https://github.com/harshitha-ras/explainable-object-detection.git
 cd explainable-object-detection
@@ -85,44 +91,44 @@ npm install
 npm run build
 
 
-Usage
-Data Preparation
+## Usage
+### Data Preparation
 
-# Convert XML annotations to YOLO format
+Convert XML annotations to YOLO format:
 python convert_xml_to_yolo.py
 
-# Split dataset into train/val/test
+Split dataset into train/val/test:
 python data_prep.py
 
 
-Training
+### Training
 
-# Train YOLOv8 model with weather refinements (CPU)
+Train YOLOv8 model with weather refinements (CPU):
 python train_yolov8.py --mode train --model n --epochs 50 --batch 2 --img-size 640 --data weather_data.yaml --device cpu --oversample --weather-balance --progressive
 
-# Train with GPU (if available)
+Train with GPU (if available):
 python train_yolov8.py --mode train --model s --epochs 100 --batch 16 --img-size 640 --data weather_data.yaml --device 0 --oversample --weather-balance --progressive
 
 
-Validation and Inference
+### Validation and Inference
 
-# Validate trained model
+Validate trained model:
 python train_yolov8.py --mode validate --weights yolo_output/yolov8s_weather_refined/weights/best.pt --data weather_data.yaml
 
-# Run inference on test images
+Run inference on test images:
 python train_yolov8.py --mode predict --weights yolo_output/yolov8s_weather_refined/weights/best.pt --source merged_dataset/test/images --conf 0.25
 
 
-Explainable AI Analysis
+### Explainable AI Analysis
 
-# Generate BODEM explanations
+Generate BODEM explanations:
 python apply_bodem.py --model yolo_output/yolov8s_weather_refined/weights/best.pt --data weather_data.yaml --output bodem_explanations --samples 10
 
-# Analyze explanations
+Analyze explanations: 
 python analyze_bodem.py --dir bodem_explanations
 
 
-Web Application
+## Web Application
 1. Start the Flask application:
 
 python app.py
@@ -136,19 +142,8 @@ python app.py
 5. Generate BODEM explanations to understand model decisions
 
 
-Command-Line Tools
-After installation, you can use the following command-line tools:
 
-eavv-train: Train YOLOv8 models
-
-eavv-convert: Convert XML annotations to YOLO format
-
-eavv-analyze: Run BODEM analysis
-
-eavv-web: Start the web application
-
-
-Project Structure
+## Project Structure
 
 explainable-object-detection/
 ├── eavv/                      # Main package
@@ -170,7 +165,7 @@ explainable-object-detection/
 └── README.md                  # This file
 
 
-Citation
+## Citation
 If you use this project in your research, please cite:
 
 @software{ExplainableObjectDetection2025,
@@ -181,10 +176,10 @@ If you use this project in your research, please cite:
 }
 
 
-License
+## License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-Acknowledgments
+## Acknowledgments
 DAWN dataset from IEEE DataPort
 
 Ultralytics for YOLOv8 implementation
